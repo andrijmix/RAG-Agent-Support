@@ -1,16 +1,16 @@
 from langchain.schema import Document
-from faq_data import faq_data
+from faq_data import faq_text
 
-def preparate_documents():
+def parse_faq_text():
+    blocks = faq_text.split("\n\n")
     docs= []
-    for item in faq_data.values():
-        question = item['question']
-        answer = item['answer']
-        docs.append(Document(page_content = answer, metadata={"question": question}))
+    for block in blocks:
+        if block.strip():
+            docs.append(Document(page_content=block.strip()))
     return docs    
 
 if __name__ == "__main__":
-    docs = preparate_documents()
+    docs = parse_faq_text()
     for doc in docs:
         print(doc.page_content)
         print(doc.page_content[:100]+ "...\n")

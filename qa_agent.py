@@ -3,12 +3,12 @@ from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 from langchain_openai import ChatOpenAI
 
-from rag_utils import preparate_documents
+from rag_utils import parse_faq_text
 from vectorstore_utils import get_vectorstore
 from langchain.callbacks import LangChainTracer
 
 def get_qa_agent():
-    docs = preparate_documents()
+    docs = parse_faq_text()
     vectorstore = get_vectorstore(docs)
     retriever = vectorstore.as_retriever()
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
