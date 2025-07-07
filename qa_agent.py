@@ -1,8 +1,6 @@
 import os
 from langchain.chains import RetrievalQA
-from langchain_community.chat_models import ChatOpenAI
 from langchain_openai import ChatOpenAI
-
 from rag_utils import parse_faq_text
 from vectorstore_utils import get_vectorstore
 from langchain.callbacks import LangChainTracer
@@ -25,7 +23,6 @@ def get_qa_agent():
 if __name__ == "__main__":
     os.environ["LANGCHAIN_TRACING_V2"] = "true" 
     os.environ["LANGCHAIN_PROJECT"] = "anzara-faq"
-    tracer = LangChainTracer()
     chain = get_qa_agent()
     
     while True:
@@ -33,7 +30,8 @@ if __name__ == "__main__":
         if query.lower() in ["exit", "quit", "bye"]:
             break
 
-        result = chain.invoke(query)
-        print("Answer: ", result["result"])
-
-
+        try:
+            result = chain.invoke(query)
+            print("Answer: ", result["result"])
+        except Exception as e:
+            print(f"Error: {str(e)}")

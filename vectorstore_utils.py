@@ -4,9 +4,9 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from rag_utils import parse_faq_text
 
-load_dotenv()  # если используете .env
+load_dotenv()  # Load environment variables
 
-embeddings = OpenAIEmbeddings()  # ключ берётся из окружения
+embeddings = OpenAIEmbeddings()  # API key from environment
 
 def get_vectorstore(documents):
     vectorstore = FAISS.from_documents(documents, embeddings)
@@ -20,5 +20,6 @@ if __name__ == "__main__":
     results = vectorstore.similarity_search(query, k=2)
 
     for doc in results:
-        print("Found question: ", doc.metadata["question"])
-        print(doc.page_content[:100]+ "...\n")
+        # Remove the metadata access since it might not exist
+        print("Found document:")
+        print(doc.page_content[:100] + "...\n")

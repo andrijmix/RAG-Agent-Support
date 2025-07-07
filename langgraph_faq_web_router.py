@@ -7,7 +7,6 @@ from ddgs import DDGS
 from langgraph.graph import StateGraph, END
 import json
 
-
 from qa_agent import get_qa_agent
 
 load_dotenv()
@@ -26,7 +25,12 @@ class SupervisorAgent:
     def supervisor_node(self, state: SupervisorState) -> SupervisorState:
         """Supervisor determines which agent to use"""
         
-        last_message = state["messages"][-1].content.lower()
+        # Safe access to message content
+        last_message = state["messages"][-1]
+        if hasattr(last_message, 'content'):
+            user_query = str(last_message.content).lower()
+        else:
+            user_query = str(last_message).lower()
 
         # Use LLM for complex cases
         supervisor_prompt = f"""
@@ -34,7 +38,7 @@ class SupervisorAgent:
         1. FAQ - for questions about Anzara loan app, online loans, credit, financial services
         2. WEB_search - for general questions, news, weather, facts that are NOT related to loans
         
-        User asked: "{state['messages'][-1].content}"
+        User asked: "{state['messages'][-1].content if hasattr(state['messages'][-1], 'content') else state['messages'][-1]}"
         
         Analyze the query:
         - If question is about loans, credit, financial services, Anzara - choose FAQ
@@ -45,11 +49,16 @@ class SupervisorAgent:
         
         messages = [
             SystemMessage(content=supervisor_prompt),
-            HumanMessage(content=state["messages"][-1].content)
+            HumanMessage(content=str(state["messages"][-1].content) if hasattr(state["messages"][-1], 'content') else str(state["messages"][-1]))
         ]
         
         response = self.llm.invoke(messages)
-        next_action = response.content.strip()
+        
+        # Safe access to response content
+        if hasattr(response, 'content'):
+            next_action = str(response.content).strip()
+        else:
+            next_action = str(response).strip()
         
         # Check if response is valid
         if next_action not in ["FAQ", "WEB_search"]:
@@ -66,10 +75,14 @@ class SupervisorAgent:
     def faq_node(self, state: SupervisorState) -> SupervisorState:
         """FAQ agent handles questions about Anzara"""
         
-        last_message = state["messages"][-1].content
+        last_message = state["messages"][-1]
+        if hasattr(last_message, 'content'):
+            query = str(last_message.content)
+        else:
+            query = str(last_message)
         
         try:
-            result = self.faq_agent.invoke(last_message)
+            result = self.faq_agent.invoke(query)
             answer = result["result"]
         except Exception as e:
             answer = f"Sorry, an error occurred while processing your Anzara query: {str(e)}"
@@ -83,18 +96,22 @@ class SupervisorAgent:
     def web_search_node(self, state: SupervisorState) -> SupervisorState:
         """Web search for general questions"""
         
-        last_message = state["messages"][-1].content
+        last_message = state["messages"][-1]
+        if hasattr(last_message, 'content'):
+            query = str(last_message.content)
+        else:
+            query = str(last_message)
         
         try:
             # Use ddgs for search
-            search_results = list(self.web_search.text(last_message, max_results=3))
+            search_results = list(self.web_search.text(query, max_results=3))
             
             # Format text from results
             results_text = "\n".join([f"- {result['title']}: {result['body']}" for result in search_results])
             
             # Create response based on search results
             response_prompt = f"""
-            User asked: "{last_message}"
+            User asked: "{query}"
             
             Search results:
             {results_text}
@@ -108,7 +125,12 @@ class SupervisorAgent:
             ]
             
             response = self.llm.invoke(messages)
-            answer = response.content
+            
+            # Safe access to response content
+            if hasattr(response, 'content'):
+                answer = str(response.content)
+            else:
+                answer = str(response)
             
         except Exception as e:
             answer = f"Sorry, an error occurred during web search: {str(e)}"
@@ -178,8 +200,8 @@ def main():
             continue
             
         try:
-            # Initial state
-            initial_state = {
+            # Initial state - properly typed
+            initial_state: SupervisorState = {
                 "messages": [HumanMessage(content=user_input)],
                 "next_action": "",
                 "final_answer": ""
