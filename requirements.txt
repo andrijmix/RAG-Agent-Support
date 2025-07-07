@@ -1,2 +1,6 @@
-
 langchain-community
+langchain-openai
+langgraph
+python-dotenv
+duckduckgo-search
+faiss-cpu

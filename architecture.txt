@@ -1,0 +1,5 @@
+[Start]
+   |
+[Supervisor] ──▶ [FAQ Agent] ──▶ [END]
+     │
+     └────▶ [WEB Search Agent] ──▶ [END]
