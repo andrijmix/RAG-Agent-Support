@@ -27,55 +27,33 @@ class SupervisorAgent:
         """Supervisor determines which agent to use"""
         
         last_message = state["messages"][-1].content.lower()
+
+        # Use LLM for complex cases
+        supervisor_prompt = f"""
+        You are a supervisor who must choose between two agents:
+        1. FAQ - for questions about Anzara loan app, online loans, credit, financial services
+        2. WEB_search - for general questions, news, weather, facts that are NOT related to loans
         
-        # List of keywords for FAQ
-        faq_keywords = [
-            "loan", "credit", "lending", "borrow",
-            "anzara", 
-            "repay", "payment", "repayment",
-            "limit", "amount", "sum",
-            "eligibility", "qualify", "qualification",
-            "timeframe", "term", "time", "period", "duration",
-            "trustworthy", "legitimate", "reliable", "safe",
-            "operate", "work", "function", "process",
-            "online loan", "mobile app", "application",
-            "m-pesa", "visa", "bank", "transfer",
-            "ugandan", "uganda", "resident"
+        User asked: "{state['messages'][-1].content}"
+        
+        Analyze the query:
+        - If question is about loans, credit, financial services, Anzara - choose FAQ
+        - If question is about weather, news, general facts - choose WEB_search
+        
+        Answer with ONLY one word: FAQ or WEB_search
+        """
+        
+        messages = [
+            SystemMessage(content=supervisor_prompt),
+            HumanMessage(content=state["messages"][-1].content)
         ]
         
-        # Check if query contains FAQ keywords
-        contains_faq_keywords = any(keyword in last_message for keyword in faq_keywords)
+        response = self.llm.invoke(messages)
+        next_action = response.content.strip()
         
-        # Additional LLM check for complex cases
-        if contains_faq_keywords:
-            next_action = "FAQ"
-        else:
-            # Use LLM for complex cases
-            supervisor_prompt = f"""
-            You are a supervisor who must choose between two agents:
-            1. FAQ - for questions about Anzara loan app, online loans, credit, financial services
-            2. WEB_search - for general questions, news, weather, facts that are NOT related to loans
-            
-            User asked: "{state['messages'][-1].content}"
-            
-            Analyze the query:
-            - If question is about loans, credit, financial services, Anzara - choose FAQ
-            - If question is about weather, news, general facts - choose WEB_search
-            
-            Answer with ONLY one word: FAQ or WEB_search
-            """
-            
-            messages = [
-                SystemMessage(content=supervisor_prompt),
-                HumanMessage(content=state["messages"][-1].content)
-            ]
-            
-            response = self.llm.invoke(messages)
-            next_action = response.content.strip()
-            
-            # Check if response is valid
-            if next_action not in ["FAQ", "WEB_search"]:
-                next_action = "FAQ"  # Default for loan-related questions
+        # Check if response is valid
+        if next_action not in ["FAQ", "WEB_search"]:
+            next_action = "FAQ"  # Default for loan-related questions
         
         print(f"🧠 Supervisor chose: {next_action}")
         
