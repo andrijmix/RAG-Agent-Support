@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from rag_utils import preparate_documents
+from rag_utils import parse_faq_text
 
 load_dotenv()  # если используете .env
 
@@ -13,7 +13,7 @@ def get_vectorstore(documents):
     return vectorstore
 
 if __name__ == "__main__":
-    docs = preparate_documents()
+    docs = parse_faq_text()
     vectorstore = get_vectorstore(docs)
 
     query = "What is the Anzara loan app?"

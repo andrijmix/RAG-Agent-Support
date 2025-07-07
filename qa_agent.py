@@ -1,6 +1,6 @@
 import os
 from langchain.chains import RetrievalQA
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain_openai import ChatOpenAI
 
 from rag_utils import parse_faq_text
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         if query.lower() in ["exit", "quit", "bye"]:
             break
 
-        result = chain(query)
+        result = chain.invoke(query)
         print("Answer: ", result["result"])
 
 
